@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -18,7 +19,6 @@ function AnnuaireContent() {
     async function fetchProfiles() {
       setLoading(true)
 
-      const detailTable = accountType === 'influencer' ? 'influencer_profiles' : 'business_profiles'
       const selectFields =
         accountType === 'influencer'
           ? `id, full_name, city, influencer_profiles ( bio, categories, whatsapp_number, photo_url, instagram_url, tiktok_url, price_range )`
@@ -62,7 +62,7 @@ function AnnuaireContent() {
         </h1>
 
         <div className="flex gap-2">
-          
+          <Link
             href="/annuaire?type=influencer"
             className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
               accountType === 'influencer'
@@ -71,8 +71,9 @@ function AnnuaireContent() {
             }`}
           >
             Influenceurs
-          </a>
-          
+          </Link>
+
+          <Link
             href="/annuaire?type=business"
             className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
               accountType === 'business'
@@ -81,7 +82,7 @@ function AnnuaireContent() {
             }`}
           >
             Entreprises
-          </a>
+          </Link>
         </div>
       </div>
 
