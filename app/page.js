@@ -12,20 +12,27 @@ export default function HomePage() {
         en toute confiance. Comptes vérifiés, contact direct, sans intermédiaire.
       </p>
 
-      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mb-4">
         <Link
-          href="/annuaire"
+          href="/annuaire?type=influencer"
           className="flex-1 py-3 rounded-lg bg-blue-600 text-white font-semibold text-center hover:bg-blue-700"
         >
           Voir les influenceurs
         </Link>
         <Link
-          href="/inscription"
-          className="flex-1 py-3 rounded-lg border-2 border-blue-600 text-blue-600 font-semibold text-center hover:bg-blue-50"
+          href="/annuaire?type=business"
+          className="flex-1 py-3 rounded-lg bg-blue-600 text-white font-semibold text-center hover:bg-blue-700"
         >
-          Créer un compte
+          Voir les entreprises
         </Link>
       </div>
+
+      <Link
+        href="/inscription"
+        className="w-full max-w-lg py-3 rounded-lg border-2 border-blue-600 text-blue-600 font-semibold text-center hover:bg-blue-50"
+      >
+        Créer un compte
+      </Link>
 
       <p className="mt-8 text-sm text-gray-500">
         Déjà inscrit ?{' '}
