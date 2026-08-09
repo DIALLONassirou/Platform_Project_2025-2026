@@ -89,6 +89,26 @@ export default function ProfilPage() {
     alert('Profil mis à jour !')
   }
 
+  async function handlePasswordChange(e) {
+    e.preventDefault()
+    const newPassword = e.target.newPassword.value
+
+    if (newPassword.length < 6) {
+      alert('Le mot de passe doit contenir au moins 6 caractères.')
+      return
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+
+    if (error) {
+      alert('Erreur : ' + error.message)
+      return
+    }
+
+    alert('Mot de passe mis à jour avec succès ! Note-le bien quelque part.')
+    e.target.reset()
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut()
     router.push('/connexion')
@@ -228,6 +248,26 @@ export default function ProfilPage() {
           {saving ? 'Enregistrement...' : 'Enregistrer'}
         </button>
       </form>
+
+      <div className="mt-8 pt-6 border-t">
+        <h2 className="font-semibold mb-3">Changer le mot de passe</h2>
+        <form onSubmit={handlePasswordChange} className="flex gap-2">
+          <input
+            type="password"
+            name="newPassword"
+            placeholder="Nouveau mot de passe"
+            required
+            minLength={6}
+            className="flex-1 border rounded-lg p-3"
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-lg bg-gray-700 text-white text-sm font-semibold"
+          >
+            Modifier
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

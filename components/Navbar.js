@@ -9,6 +9,7 @@ export default function Navbar() {
   const supabase = createClient()
   const router = useRouter()
   const [user, setUser] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -17,13 +18,34 @@ export default function Navbar() {
         data: { user },
       } = await supabase.auth.getUser()
       setUser(user)
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single()
+        setIsAdmin(profile?.is_admin || false)
+      }
+
       setLoading(false)
     }
 
     checkUser()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user || null)
+
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', session.user.id)
+          .single()
+        setIsAdmin(profile?.is_admin || false)
+      } else {
+        setIsAdmin(false)
+      }
     })
 
     return () => listener.subscription.unsubscribe()
@@ -45,6 +67,12 @@ export default function Navbar() {
           <Link href="/annuaire" className="text-gray-700 hover:text-blue-600">
             Annuaire
           </Link>
+
+          {!loading && isAdmin && (
+            <Link href="/admin" className="text-purple-700 font-semibold hover:text-purple-900">
+              Admin
+            </Link>
+          )}
 
           {!loading && user && (
             <>

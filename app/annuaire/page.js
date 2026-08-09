@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -14,6 +13,9 @@ function AnnuaireContent() {
   const [loading, setLoading] = useState(true)
   const [cityFilter, setCityFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [reportingId, setReportingId] = useState(null)
+  const [reportReason, setReportReason] = useState('')
+  const [reportSending, setReportSending] = useState(false)
 
   useEffect(() => {
     async function fetchProfiles() {
@@ -54,6 +56,72 @@ function AnnuaireContent() {
     window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${message}`, '_blank')
   }
 
+  async function submitReport() {
+    const trimmedReason = reportReason.trim()
+
+    // Garde-fou 1 : longueur minimale, pour éviter les signalements impulsifs
+    if (trimmedReason.length < 20) {
+      alert(
+        'Merci de décrire le problème de façon un peu plus détaillée (au moins 20 caractères), pour que notre équipe puisse bien comprendre la situation.'
+      )
+      return
+    }
+
+    // Garde-fou 2 : confirmation explicite avant envoi
+    const confirmed = confirm(
+      'Un signalement est une démarche sérieuse qui sera examinée par notre équipe. Confirmes-tu vouloir signaler ce profil ?'
+    )
+    if (!confirmed) return
+
+    setReportSending(true)
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      alert('Tu dois être connecté pour signaler un profil.')
+      setReportSending(false)
+      return
+    }
+
+    // Garde-fou 3 : empêcher un double signalement du même profil par la même personne
+    const { data: existing } = await supabase
+      .from('reports')
+      .select('id')
+      .eq('reporter_id', user.id)
+      .eq('reported_id', reportingId)
+      .eq('resolved', false)
+      .maybeSingle()
+
+    if (existing) {
+      alert('Tu as déjà signalé ce profil récemment. Notre équipe est en train de l’examiner.')
+      setReportSending(false)
+      setReportingId(null)
+      setReportReason('')
+      return
+    }
+
+    const { error } = await supabase.from('reports').insert({
+      reporter_id: user.id,
+      reported_id: reportingId,
+      reason: trimmedReason,
+    })
+
+    setReportSending(false)
+
+    if (error) {
+      alert("Erreur lors de l'envoi du signalement : " + error.message)
+      return
+    }
+
+    alert(
+      'Signalement envoyé. Notre équipe va l’examiner attentivement avant de prendre une décision.'
+    )
+    setReportingId(null)
+    setReportReason('')
+  }
+
   return (
     <div className="max-w-5xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -62,7 +130,7 @@ function AnnuaireContent() {
         </h1>
 
         <div className="flex gap-2">
-          <Link
+          <a
             href="/annuaire?type=influencer"
             className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
               accountType === 'influencer'
@@ -71,9 +139,8 @@ function AnnuaireContent() {
             }`}
           >
             Influenceurs
-          </Link>
-
-          <Link
+          </a>
+          <a
             href="/annuaire?type=business"
             className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
               accountType === 'business'
@@ -82,7 +149,7 @@ function AnnuaireContent() {
             }`}
           >
             Entreprises
-          </Link>
+          </a>
         </div>
       </div>
 
@@ -158,9 +225,16 @@ function AnnuaireContent() {
                   onClick={() =>
                     contactWhatsApp(inf.influencer_profiles.whatsapp_number, inf.full_name)
                   }
-                  className="w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700"
+                  className="w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 mb-2"
                 >
                   Contacter sur WhatsApp
+                </button>
+
+                <button
+                  onClick={() => setReportingId(inf.id)}
+                  className="w-full text-xs text-red-500 hover:underline"
+                >
+                  Signaler ce profil
                 </button>
               </div>
             ))
@@ -196,13 +270,60 @@ function AnnuaireContent() {
 
                 <button
                   onClick={() => contactWhatsApp(biz.phone, biz.full_name)}
-                  className="w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700"
+                  className="w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 mb-2"
                 >
                   Contacter sur WhatsApp
+                </button>
+
+                <button
+                  onClick={() => setReportingId(biz.id)}
+                  className="w-full text-xs text-red-500 hover:underline"
+                >
+                  Signaler ce profil
                 </button>
               </div>
             ))}
       </div>
+
+      {reportingId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full">
+            <h3 className="font-semibold mb-1">Signaler ce profil</h3>
+            <p className="text-xs text-gray-500 mb-3">
+              Décris précisément le problème rencontré. Les signalements sont examinés
+              manuellement par notre équipe avant toute action.
+            </p>
+            <textarea
+              placeholder="Explique en détail le problème rencontré (minimum 20 caractères)..."
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="w-full border rounded-lg p-3 mb-1"
+              rows={4}
+            />
+            <p className="text-xs text-gray-400 mb-4">
+              {reportReason.trim().length} / 20 caractères minimum
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setReportingId(null)
+                  setReportReason('')
+                }}
+                className="flex-1 py-2 rounded-lg border text-gray-700"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={submitReport}
+                disabled={reportSending}
+                className="flex-1 py-2 rounded-lg bg-red-600 text-white font-semibold disabled:opacity-50"
+              >
+                {reportSending ? 'Envoi...' : 'Envoyer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
