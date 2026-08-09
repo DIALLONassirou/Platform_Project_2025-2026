@@ -59,7 +59,6 @@ function AnnuaireContent() {
   async function submitReport() {
     const trimmedReason = reportReason.trim()
 
-    // Garde-fou 1 : longueur minimale, pour éviter les signalements impulsifs
     if (trimmedReason.length < 20) {
       alert(
         'Merci de décrire le problème de façon un peu plus détaillée (au moins 20 caractères), pour que notre équipe puisse bien comprendre la situation.'
@@ -67,7 +66,6 @@ function AnnuaireContent() {
       return
     }
 
-    // Garde-fou 2 : confirmation explicite avant envoi
     const confirmed = confirm(
       'Un signalement est une démarche sérieuse qui sera examinée par notre équipe. Confirmes-tu vouloir signaler ce profil ?'
     )
@@ -85,7 +83,6 @@ function AnnuaireContent() {
       return
     }
 
-    // Garde-fou 3 : empêcher un double signalement du même profil par la même personne
     const { data: existing } = await supabase
       .from('reports')
       .select('id')
@@ -123,207 +120,209 @@ function AnnuaireContent() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="text-2xl font-bold">
-          {accountType === 'influencer' ? 'Trouver un influenceur' : 'Trouver une entreprise'}
-        </h1>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto p-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {accountType === 'influencer' ? 'Trouver un influenceur' : 'Trouver une entreprise'}
+          </h1>
 
-        <div className="flex gap-2">
-          <a
-            href="/annuaire?type=influencer"
-            className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
-              accountType === 'influencer'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700'
-            }`}
-          >
-            Influenceurs
-          </a>
-          <a
-            href="/annuaire?type=business"
-            className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
-              accountType === 'business'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700'
-            }`}
-          >
-            Entreprises
-          </a>
-        </div>
-      </div>
-
-      <div className="flex gap-4 mb-8 flex-wrap">
-        <input
-          type="text"
-          placeholder="Filtrer par ville..."
-          value={cityFilter}
-          onChange={(e) => setCityFilter(e.target.value)}
-          className="border rounded-lg p-2"
-        />
-        {accountType === 'influencer' && (
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="border rounded-lg p-2"
-          >
-            <option value="">Toutes les catégories</option>
-            <option value="mode">Mode</option>
-            <option value="beauté">Beauté</option>
-            <option value="food">Food</option>
-            <option value="lifestyle">Lifestyle</option>
-            <option value="tech">Tech</option>
-            <option value="événementiel">Événementiel</option>
-          </select>
-        )}
-      </div>
-
-      {loading && <p>Chargement...</p>}
-      {!loading && filtered.length === 0 && <p>Aucun résultat trouvé.</p>}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {accountType === 'influencer'
-          ? filtered.map((inf) => (
-              <div key={inf.id} className="border rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  {inf.influencer_profiles?.photo_url ? (
-                    <img
-                      src={inf.influencer_profiles.photo_url}
-                      alt={inf.full_name}
-                      className="w-14 h-14 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 rounded-full bg-gray-200" />
-                  )}
-                  <div>
-                    <h2 className="font-semibold">{inf.full_name}</h2>
-                    <p className="text-sm text-gray-500">{inf.city}</p>
-                  </div>
-                </div>
-
-                {inf.influencer_profiles?.bio && (
-                  <p className="text-sm text-gray-700 mb-2">{inf.influencer_profiles.bio}</p>
-                )}
-
-                {inf.influencer_profiles?.categories?.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {inf.influencer_profiles.categories.map((cat) => (
-                      <span key={cat} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                        {cat}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {inf.influencer_profiles?.price_range && (
-                  <p className="text-xs text-gray-500 mb-3">
-                    Tarif indicatif : {inf.influencer_profiles.price_range}
-                  </p>
-                )}
-
-                <button
-                  onClick={() =>
-                    contactWhatsApp(inf.influencer_profiles.whatsapp_number, inf.full_name)
-                  }
-                  className="w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 mb-2"
-                >
-                  Contacter sur WhatsApp
-                </button>
-
-                <button
-                  onClick={() => setReportingId(inf.id)}
-                  className="w-full text-xs text-red-500 hover:underline"
-                >
-                  Signaler ce profil
-                </button>
-              </div>
-            ))
-          : filtered.map((biz) => (
-              <div key={biz.id} className="border rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  {biz.business_profiles?.logo_url ? (
-                    <img
-                      src={biz.business_profiles.logo_url}
-                      alt={biz.full_name}
-                      className="w-14 h-14 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 rounded-full bg-gray-200" />
-                  )}
-                  <div>
-                    <h2 className="font-semibold">
-                      {biz.business_profiles?.company_name || biz.full_name}
-                    </h2>
-                    <p className="text-sm text-gray-500">{biz.city}</p>
-                  </div>
-                </div>
-
-                {biz.business_profiles?.sector && (
-                  <p className="text-xs text-blue-700 bg-blue-100 inline-block px-2 py-1 rounded-full mb-2">
-                    {biz.business_profiles.sector}
-                  </p>
-                )}
-
-                {biz.business_profiles?.description && (
-                  <p className="text-sm text-gray-700 mb-3">{biz.business_profiles.description}</p>
-                )}
-
-                <button
-                  onClick={() => contactWhatsApp(biz.phone, biz.full_name)}
-                  className="w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 mb-2"
-                >
-                  Contacter sur WhatsApp
-                </button>
-
-                <button
-                  onClick={() => setReportingId(biz.id)}
-                  className="w-full text-xs text-red-500 hover:underline"
-                >
-                  Signaler ce profil
-                </button>
-              </div>
-            ))}
-      </div>
-
-      {reportingId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full">
-            <h3 className="font-semibold mb-1">Signaler ce profil</h3>
-            <p className="text-xs text-gray-500 mb-3">
-              Décris précisément le problème rencontré. Les signalements sont examinés
-              manuellement par notre équipe avant toute action.
-            </p>
-            <textarea
-              placeholder="Explique en détail le problème rencontré (minimum 20 caractères)..."
-              value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
-              className="w-full border rounded-lg p-3 mb-1"
-              rows={4}
-            />
-            <p className="text-xs text-gray-400 mb-4">
-              {reportReason.trim().length} / 20 caractères minimum
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setReportingId(null)
-                  setReportReason('')
-                }}
-                className="flex-1 py-2 rounded-lg border text-gray-700"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={submitReport}
-                disabled={reportSending}
-                className="flex-1 py-2 rounded-lg bg-red-600 text-white font-semibold disabled:opacity-50"
-              >
-                {reportSending ? 'Envoi...' : 'Envoyer'}
-              </button>
-            </div>
+          <div className="flex gap-2">
+            <a
+              href="/annuaire?type=influencer"
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                accountType === 'influencer'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 border'
+              }`}
+            >
+              Influenceurs
+            </a>
+            <a
+              href="/annuaire?type=business"
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                accountType === 'business'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 border'
+              }`}
+            >
+              Entreprises
+            </a>
           </div>
         </div>
-      )}
+
+        <div className="flex gap-4 mb-8 flex-wrap">
+          <input
+            type="text"
+            placeholder="Filtrer par ville..."
+            value={cityFilter}
+            onChange={(e) => setCityFilter(e.target.value)}
+            className="border rounded-lg p-2 bg-white"
+          />
+          {accountType === 'influencer' && (
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="border rounded-lg p-2 bg-white"
+            >
+              <option value="">Toutes les catégories</option>
+              <option value="mode">Mode</option>
+              <option value="beauté">Beauté</option>
+              <option value="food">Food</option>
+              <option value="lifestyle">Lifestyle</option>
+              <option value="tech">Tech</option>
+              <option value="événementiel">Événementiel</option>
+            </select>
+          )}
+        </div>
+
+        {loading && <p className="text-gray-600">Chargement...</p>}
+        {!loading && filtered.length === 0 && <p className="text-gray-600">Aucun résultat trouvé.</p>}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {accountType === 'influencer'
+            ? filtered.map((inf) => (
+                <div key={inf.id} className="bg-white border rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    {inf.influencer_profiles?.photo_url ? (
+                      <img
+                        src={inf.influencer_profiles.photo_url}
+                        alt={inf.full_name}
+                        className="w-14 h-14 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-gray-200" />
+                    )}
+                    <div>
+                      <h2 className="font-semibold text-gray-900">{inf.full_name}</h2>
+                      <p className="text-sm text-gray-500">{inf.city}</p>
+                    </div>
+                  </div>
+
+                  {inf.influencer_profiles?.bio && (
+                    <p className="text-sm text-gray-700 mb-2">{inf.influencer_profiles.bio}</p>
+                  )}
+
+                  {inf.influencer_profiles?.categories?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {inf.influencer_profiles.categories.map((cat) => (
+                        <span key={cat} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {inf.influencer_profiles?.price_range && (
+                    <p className="text-xs text-gray-500 mb-3">
+                      Tarif indicatif : {inf.influencer_profiles.price_range}
+                    </p>
+                  )}
+
+                  <button
+                    onClick={() =>
+                      contactWhatsApp(inf.influencer_profiles.whatsapp_number, inf.full_name)
+                    }
+                    className="w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 mb-2"
+                  >
+                    Contacter sur WhatsApp
+                  </button>
+
+                  <button
+                    onClick={() => setReportingId(inf.id)}
+                    className="w-full text-xs text-red-500 hover:underline"
+                  >
+                    Signaler ce profil
+                  </button>
+                </div>
+              ))
+            : filtered.map((biz) => (
+                <div key={biz.id} className="bg-white border rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    {biz.business_profiles?.logo_url ? (
+                      <img
+                        src={biz.business_profiles.logo_url}
+                        alt={biz.full_name}
+                        className="w-14 h-14 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-gray-200" />
+                    )}
+                    <div>
+                      <h2 className="font-semibold text-gray-900">
+                        {biz.business_profiles?.company_name || biz.full_name}
+                      </h2>
+                      <p className="text-sm text-gray-500">{biz.city}</p>
+                    </div>
+                  </div>
+
+                  {biz.business_profiles?.sector && (
+                    <p className="text-xs text-blue-700 bg-blue-100 inline-block px-2 py-1 rounded-full mb-2">
+                      {biz.business_profiles.sector}
+                    </p>
+                  )}
+
+                  {biz.business_profiles?.description && (
+                    <p className="text-sm text-gray-700 mb-3">{biz.business_profiles.description}</p>
+                  )}
+
+                  <button
+                    onClick={() => contactWhatsApp(biz.phone, biz.full_name)}
+                    className="w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 mb-2"
+                  >
+                    Contacter sur WhatsApp
+                  </button>
+
+                  <button
+                    onClick={() => setReportingId(biz.id)}
+                    className="w-full text-xs text-red-500 hover:underline"
+                  >
+                    Signaler ce profil
+                  </button>
+                </div>
+              ))}
+        </div>
+
+        {reportingId && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full">
+              <h3 className="font-semibold mb-1">Signaler ce profil</h3>
+              <p className="text-xs text-gray-500 mb-3">
+                Décris précisément le problème rencontré. Les signalements sont examinés
+                manuellement par notre équipe avant toute action.
+              </p>
+              <textarea
+                placeholder="Explique en détail le problème rencontré (minimum 20 caractères)..."
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                className="w-full border rounded-lg p-3 mb-1"
+                rows={4}
+              />
+              <p className="text-xs text-gray-400 mb-4">
+                {reportReason.trim().length} / 20 caractères minimum
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setReportingId(null)
+                    setReportReason('')
+                  }}
+                  className="flex-1 py-2 rounded-lg border text-gray-700"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={submitReport}
+                  disabled={reportSending}
+                  className="flex-1 py-2 rounded-lg bg-red-600 text-white font-semibold disabled:opacity-50"
+                >
+                  {reportSending ? 'Envoi...' : 'Envoyer'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
