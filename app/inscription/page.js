@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { SOCIAL_PLATFORMS } from '@/lib/socialPlatforms'
 
 export default function InscriptionPage() {
   const router = useRouter()
@@ -14,8 +15,13 @@ export default function InscriptionPage() {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [city, setCity] = useState('')
+  const [socials, setSocials] = useState({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  function updateSocial(key, field, value) {
+    setSocials({ ...socials, [`${key}_${field}`]: value })
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -81,9 +87,18 @@ export default function InscriptionPage() {
 
     // 3. Créer la ligne spécifique (influenceur ou entreprise) avec des valeurs par défaut
     if (accountType === 'influencer') {
+      const socialFields = {}
+      SOCIAL_PLATFORMS.forEach(({ key }) => {
+        const url = socials[`${key}_url`]
+        const followers = socials[`${key}_followers`]
+        if (url) socialFields[`${key}_url`] = url
+        if (followers) socialFields[`${key}_followers`] = parseInt(followers, 10)
+      })
+
       await supabase.from('influencer_profiles').insert({
         id: userId,
         whatsapp_number: phone,
+        ...socialFields,
       })
     } else {
       await supabase.from('business_profiles').insert({
@@ -173,6 +188,36 @@ export default function InscriptionPage() {
             minLength={6}
             className="w-full border rounded-lg p-3"
           />
+
+          {accountType === 'influencer' && (
+            <div className="pt-2">
+              <p className="text-sm font-semibold text-gray-700 mb-1">Tes réseaux sociaux</p>
+              <p className="text-xs text-gray-500 mb-3">
+                Renseigne uniquement les réseaux que tu utilises (facultatif).
+              </p>
+              <div className="space-y-3">
+                {SOCIAL_PLATFORMS.map(({ key, label }) => (
+                  <div key={key} className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder={`Lien ${label}`}
+                      value={socials[`${key}_url`] || ''}
+                      onChange={(e) => updateSocial(key, 'url', e.target.value)}
+                      className="w-full border rounded-lg p-2 text-sm"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Nb followers"
+                      value={socials[`${key}_followers`] || ''}
+                      onChange={(e) => updateSocial(key, 'followers', e.target.value)}
+                      className="w-full border rounded-lg p-2 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {error && <p className="text-red-600 text-sm">{error}</p>}
 

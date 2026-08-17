@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { SOCIAL_PLATFORMS } from '@/lib/socialPlatforms'
 
 export default function ProfilPage() {
   const supabase = createClient()
@@ -83,7 +84,18 @@ export default function ProfilPage() {
 
     const table = profile.account_type === 'influencer' ? 'influencer_profiles' : 'business_profiles'
 
-    await supabase.from(table).update(detail).eq('id', profile.id)
+    const payload = { ...detail }
+    if (profile.account_type === 'influencer') {
+      SOCIAL_PLATFORMS.forEach(({ key }) => {
+        const followersKey = `${key}_followers`
+        payload[followersKey] =
+          payload[followersKey] === '' || payload[followersKey] == null
+            ? null
+            : parseInt(payload[followersKey], 10)
+      })
+    }
+
+    await supabase.from(table).update(payload).eq('id', profile.id)
 
     setSaving(false)
     alert('Profil mis à jour !')
@@ -199,20 +211,34 @@ export default function ProfilPage() {
               </div>
             </div>
 
-            <input
-              type="text"
-              placeholder="Lien Instagram"
-              value={detail.instagram_url || ''}
-              onChange={(e) => setDetail({ ...detail, instagram_url: e.target.value })}
-              className="w-full border rounded-lg p-3"
-            />
-            <input
-              type="text"
-              placeholder="Lien TikTok"
-              value={detail.tiktok_url || ''}
-              onChange={(e) => setDetail({ ...detail, tiktok_url: e.target.value })}
-              className="w-full border rounded-lg p-3"
-            />
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Réseaux sociaux</p>
+              <div className="space-y-2">
+                {SOCIAL_PLATFORMS.map(({ key, label }) => (
+                  <div key={key} className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder={`Lien ${label}`}
+                      value={detail[`${key}_url`] || ''}
+                      onChange={(e) =>
+                        setDetail({ ...detail, [`${key}_url`]: e.target.value })
+                      }
+                      className="w-full border rounded-lg p-2 text-sm"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Nb followers"
+                      value={detail[`${key}_followers`] || ''}
+                      onChange={(e) =>
+                        setDetail({ ...detail, [`${key}_followers`]: e.target.value })
+                      }
+                      className="w-full border rounded-lg p-2 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
             <input
               type="text"
               placeholder="Tarif indicatif (ex: 50 000 - 200 000 GNF)"

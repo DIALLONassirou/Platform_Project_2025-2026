@@ -3,6 +3,12 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { SOCIAL_PLATFORMS } from '@/lib/socialPlatforms'
+
+const SOCIAL_SELECT_FIELDS = SOCIAL_PLATFORMS.flatMap(({ key }) => [
+  `${key}_url`,
+  `${key}_followers`,
+]).join(', ')
 
 function AnnuaireContent() {
   const supabase = createClient()
@@ -23,7 +29,7 @@ function AnnuaireContent() {
 
       const selectFields =
         accountType === 'influencer'
-          ? `id, full_name, city, influencer_profiles ( bio, categories, whatsapp_number, photo_url, instagram_url, tiktok_url, price_range )`
+          ? `id, full_name, city, influencer_profiles ( bio, categories, whatsapp_number, photo_url, price_range, ${SOCIAL_SELECT_FIELDS} )`
           : `id, full_name, city, phone, business_profiles ( company_name, sector, description, logo_url, website_url )`
 
       let query = supabase
@@ -217,6 +223,28 @@ function AnnuaireContent() {
                     <p className="text-xs text-gray-500 mb-3">
                       Tarif indicatif : {inf.influencer_profiles.price_range}
                     </p>
+                  )}
+
+                  {SOCIAL_PLATFORMS.some(({ key }) => inf.influencer_profiles?.[`${key}_url`]) && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {SOCIAL_PLATFORMS.map(({ key, label }) => {
+                        const url = inf.influencer_profiles?.[`${key}_url`]
+                        if (!url) return null
+                        const followers = inf.influencer_profiles?.[`${key}_followers`]
+                        return (
+                          <a
+                            key={key}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-200"
+                          >
+                            {label}
+                            {followers ? ` · ${followers}` : ''}
+                          </a>
+                        )
+                      })}
+                    </div>
                   )}
 
                   <button
