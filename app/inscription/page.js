@@ -18,18 +18,59 @@ export default function InscriptionPage() {
   const [socials, setSocials] = useState({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [awaitingCode, setAwaitingCode] = useState(false)
-  const [verificationCode, setVerificationCode] = useState('')
-  const [verifying, setVerifying] = useState(false)
-  const [resending, setResending] = useState(false)
-  const [resendMessage, setResendMessage] = useState(null)
 
   function updateSocial(key, field, value) {
     setSocials({ ...socials, [`${key}_${field}`]: value })
   }
 
-  async function createProfileRows(userId) {
-    // 1. Créer la ligne dans la table "profiles" (commune)
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError(null)
+
+    if (!accountType) {
+      setError('Merci de choisir un type de compte.')
+      return
+    }
+
+    setLoading(true)
+
+    // 1. Créer le compte d'authentification
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+    })
+
+    if (signUpError) {
+      setError(signUpError.message)
+      setLoading(false)
+      return
+    }
+
+    const userId = data.user?.id
+    if (!userId) {
+      setError("Une erreur est survenue. Vérifie ton email pour confirmer ton compte.")
+      setLoading(false)
+      return
+    }
+
+    // Vérifie explicitement que la session est bien active avant d'insérer
+    // (nécessaire pour que auth.uid() soit disponible côté RLS)
+    let session = data.session
+    if (!session) {
+      const { data: sessionData } = await supabase.auth.getSession()
+      session = sessionData.session
+    }
+
+    if (!session) {
+      setError(
+        "Le compte a été créé mais la session n'a pas pu être activée automatiquement. Essaie de te connecter directement."
+      )
+      setLoading(false)
+      router.push('/connexion')
+      return
+    }
+
+    // 2. Créer la ligne dans la table "profiles" (commune)
     const { error: profileError } = await supabase.from('profiles').insert({
       id: userId,
       account_type: accountType,
@@ -40,10 +81,11 @@ export default function InscriptionPage() {
 
     if (profileError) {
       setError(profileError.message)
-      return false
+      setLoading(false)
+      return
     }
 
-    // 2. Créer la ligne spécifique (influenceur ou entreprise) avec des valeurs par défaut
+    // 3. Créer la ligne spécifique (influenceur ou entreprise) avec des valeurs par défaut
     if (accountType === 'influencer') {
       const socialFields = {}
       SOCIAL_PLATFORMS.forEach(({ key }) => {
@@ -65,85 +107,8 @@ export default function InscriptionPage() {
       })
     }
 
-    return true
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setError(null)
-
-    if (!accountType) {
-      setError('Merci de choisir un type de compte.')
-      return
-    }
-
-    setLoading(true)
-
-    const { error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-
     setLoading(false)
-
-    if (signUpError) {
-      setError(signUpError.message)
-      return
-    }
-
-    setAwaitingCode(true)
-  }
-
-  async function handleVerifyCode(e) {
-    e.preventDefault()
-    setError(null)
-    setVerifying(true)
-
-    const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      email,
-      token: verificationCode,
-      type: 'signup',
-    })
-
-    if (verifyError) {
-      setError(verifyError.message)
-      setVerifying(false)
-      return
-    }
-
-    const userId = data.user?.id
-    if (!userId) {
-      setError("Une erreur est survenue lors de la vérification. Réessaie.")
-      setVerifying(false)
-      return
-    }
-
-    const ok = await createProfileRows(userId)
-    setVerifying(false)
-
-    if (ok) {
-      router.push('/profil')
-    }
-  }
-
-  async function handleResendCode() {
-    setResending(true)
-    setError(null)
-    setResendMessage(null)
-
-    const { error: resendError } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-    })
-
-    setResending(false)
-
-    if (resendError) {
-      setError(resendError.message)
-      return
-    }
-
-    setResendMessage('Un nouveau code vient d’être envoyé.')
+    router.push('/profil')
   }
 
   return (
@@ -169,49 +134,8 @@ export default function InscriptionPage() {
         </div>
       )}
 
-      {/* Étape 3 : vérification du code reçu par email */}
-      {accountType && awaitingCode && (
-        <form onSubmit={handleVerifyCode} className="space-y-4">
-          <p className="text-gray-600 text-sm">
-            Un code de vérification à 6 chiffres a été envoyé à <strong>{email}</strong>.
-            Saisis-le ci-dessous pour finaliser la création de ton compte.
-          </p>
-
-          <input
-            type="text"
-            inputMode="numeric"
-            placeholder="Code de vérification"
-            value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
-            required
-            maxLength={6}
-            className="w-full border rounded-lg p-3 text-center text-lg tracking-widest"
-          />
-
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          {resendMessage && <p className="text-green-600 text-sm">{resendMessage}</p>}
-
-          <button
-            type="submit"
-            disabled={verifying}
-            className="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-50"
-          >
-            {verifying ? 'Vérification...' : 'Vérifier le code'}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleResendCode}
-            disabled={resending}
-            className="w-full text-sm text-blue-600 underline disabled:opacity-50"
-          >
-            {resending ? 'Envoi en cours...' : 'Renvoyer le code'}
-          </button>
-        </form>
-      )}
-
       {/* Étape 2 : formulaire */}
-      {accountType && !awaitingCode && (
+      {accountType && (
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-sm text-gray-500">
             Compte : <strong>{accountType === 'influencer' ? 'Influenceur' : 'Entreprise'}</strong>{' '}
