@@ -23,6 +23,7 @@ function AnnuaireContent() {
   const [reportingId, setReportingId] = useState(null)
   const [reportReason, setReportReason] = useState('')
   const [reportSending, setReportSending] = useState(false)
+  const [optionsOpenId, setOptionsOpenId] = useState(null)
 
   useEffect(() => {
     async function fetchProfiles() {
@@ -182,7 +183,34 @@ function AnnuaireContent() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {accountType === 'influencer'
             ? filtered.map((inf) => (
-                <div key={inf.id} className="bg-white border rounded-xl p-4 shadow-sm">
+                <div key={inf.id} className="relative bg-white border rounded-xl p-4 shadow-sm">
+                  <div className="absolute top-3 right-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOptionsOpenId(optionsOpenId === inf.id ? null : inf.id)
+                      }
+                      aria-label="Plus d'options"
+                      className="text-gray-400 hover:text-gray-600 px-1 text-lg leading-none"
+                    >
+                      ⋯
+                    </button>
+                    {optionsOpenId === inf.id && (
+                      <div className="absolute right-0 mt-1 bg-white border rounded-lg shadow-md py-1 z-10 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReportingId(inf.id)
+                            setOptionsOpenId(null)
+                          }}
+                          className="block w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50"
+                        >
+                          Signaler ce profil
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <Link href={`/profil/${inf.id}`} className="flex items-center gap-3 mb-3">
                     {inf.influencer_profiles?.photo_url ? (
                       <img
@@ -251,21 +279,41 @@ function AnnuaireContent() {
 
                   <Link
                     href={`/messages/${inf.id}`}
-                    className="block text-center w-full py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 mb-2"
+                    className="block text-center w-full py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
                   >
                     Envoyer un message
                   </Link>
-
-                  <button
-                    onClick={() => setReportingId(inf.id)}
-                    className="w-full text-xs text-red-500 hover:underline"
-                  >
-                    Signaler ce profil
-                  </button>
                 </div>
               ))
             : filtered.map((biz) => (
-                <div key={biz.id} className="bg-white border rounded-xl p-4 shadow-sm">
+                <div key={biz.id} className="relative bg-white border rounded-xl p-4 shadow-sm">
+                  <div className="absolute top-3 right-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOptionsOpenId(optionsOpenId === biz.id ? null : biz.id)
+                      }
+                      aria-label="Plus d'options"
+                      className="text-gray-400 hover:text-gray-600 px-1 text-lg leading-none"
+                    >
+                      ⋯
+                    </button>
+                    {optionsOpenId === biz.id && (
+                      <div className="absolute right-0 mt-1 bg-white border rounded-lg shadow-md py-1 z-10 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReportingId(biz.id)
+                            setOptionsOpenId(null)
+                          }}
+                          className="block w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50"
+                        >
+                          Signaler ce profil
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <Link href={`/profil/${biz.id}`} className="flex items-center gap-3 mb-3">
                     {biz.business_profiles?.logo_url ? (
                       <img
@@ -301,17 +349,10 @@ function AnnuaireContent() {
 
                   <Link
                     href={`/messages/${biz.id}`}
-                    className="block text-center w-full py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 mb-2"
+                    className="block text-center w-full py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
                   >
                     Envoyer un message
                   </Link>
-
-                  <button
-                    onClick={() => setReportingId(biz.id)}
-                    className="w-full text-xs text-red-500 hover:underline"
-                  >
-                    Signaler ce profil
-                  </button>
                 </div>
               ))}
         </div>

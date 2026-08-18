@@ -15,6 +15,7 @@ export default function PublicProfilePage() {
   const [notFound, setNotFound] = useState(false)
   const [profile, setProfile] = useState(null)
   const [detail, setDetail] = useState({})
+  const [optionsOpen, setOptionsOpen] = useState(false)
   const [reporting, setReporting] = useState(false)
   const [reportReason, setReportReason] = useState('')
   const [reportSending, setReportSending] = useState(false)
@@ -131,26 +132,53 @@ export default function PublicProfilePage() {
 
   return (
     <div className="max-w-md mx-auto mt-12 p-6">
-      <div className="flex items-center gap-4 mb-4">
-        {(profile.account_type === 'influencer' ? detail.photo_url : detail.logo_url) ? (
-          <img
-            src={profile.account_type === 'influencer' ? detail.photo_url : detail.logo_url}
-            alt={displayName}
-            className="w-20 h-20 rounded-full object-cover border"
-          />
-        ) : (
-          <div className="w-20 h-20 rounded-full bg-gray-200" />
-        )}
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-1">
-            {displayName}
-            {profile.is_certified && (
-              <span title="Compte certifié" className="text-yellow-500">
-                ⭐
-              </span>
-            )}
-          </h1>
-          <p className="text-sm text-gray-500">{profile.city}</p>
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-4">
+          {(profile.account_type === 'influencer' ? detail.photo_url : detail.logo_url) ? (
+            <img
+              src={profile.account_type === 'influencer' ? detail.photo_url : detail.logo_url}
+              alt={displayName}
+              className="w-20 h-20 rounded-full object-cover border"
+            />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-gray-200" />
+          )}
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-1">
+              {displayName}
+              {profile.is_certified && (
+                <span title="Compte certifié" className="text-yellow-500">
+                  ⭐
+                </span>
+              )}
+            </h1>
+            <p className="text-sm text-gray-500">{profile.city}</p>
+          </div>
+        </div>
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOptionsOpen((v) => !v)}
+            aria-label="Plus d'options"
+            className="text-gray-400 hover:text-gray-600 px-2 text-lg leading-none"
+          >
+            ⋯
+          </button>
+          {optionsOpen && (
+            <div className="absolute right-0 mt-1 bg-white border rounded-lg shadow-md py-1 z-10 whitespace-nowrap">
+              <button
+                type="button"
+                onClick={() => {
+                  setReporting(true)
+                  setOptionsOpen(false)
+                }}
+                className="block w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50"
+              >
+                Signaler ce profil
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -220,21 +248,13 @@ export default function PublicProfilePage() {
 
       <Link
         href={`/messages/${id}`}
-        className="block text-center w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 mb-2"
+        className="block text-center w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
       >
         Envoyer un message
       </Link>
 
-      {!reporting ? (
-        <button
-          type="button"
-          onClick={() => setReporting(true)}
-          className="w-full text-xs text-red-500 hover:underline"
-        >
-          Signaler ce profil
-        </button>
-      ) : (
-        <div className="border rounded-lg p-3 mt-2">
+      {reporting && (
+        <div className="border rounded-lg p-3 mt-3">
           <textarea
             placeholder="Explique en détail le problème rencontré (minimum 20 caractères)..."
             value={reportReason}
