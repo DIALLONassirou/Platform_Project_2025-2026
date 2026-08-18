@@ -15,6 +15,8 @@ export default function NouvelleCampagnePage() {
   const [description, setDescription] = useState('')
   const [budget, setBudget] = useState('')
   const [category, setCategory] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
+  const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -35,6 +37,35 @@ export default function NouvelleCampagnePage() {
     checkAuth()
   }, [])
 
+  async function handleImageUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setUploading(true)
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    const fileExt = file.name.split('.').pop()
+    const filePath = `${user.id}/campaign-${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('Avatars')
+      .upload(filePath, file, { upsert: true })
+
+    if (uploadError) {
+      alert("Erreur lors de l'envoi de l'image : " + uploadError.message)
+      setUploading(false)
+      return
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('Avatars').getPublicUrl(filePath)
+    setImageUrl(publicUrlData.publicUrl)
+
+    setUploading(false)
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
@@ -50,6 +81,7 @@ export default function NouvelleCampagnePage() {
       description: description.trim(),
       budget: budget.trim() || null,
       category: category || null,
+      image_url: imageUrl || null,
     })
 
     setLoading(false)
@@ -69,6 +101,30 @@ export default function NouvelleCampagnePage() {
       <h1 className="text-2xl font-bold mb-6">Publier une campagne</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt="Aperçu"
+              className="w-full h-40 object-cover rounded-lg border mb-2"
+            />
+          ) : (
+            <div className="w-full h-40 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400 text-sm mb-2">
+              Aucun visuel
+            </div>
+          )}
+          <label className="text-sm text-blue-600 underline cursor-pointer">
+            {uploading ? 'Envoi en cours...' : "Ajouter un visuel (facultatif)"}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploading}
+              className="hidden"
+            />
+          </label>
+        </div>
+
         <input
           type="text"
           placeholder="Titre de la campagne"

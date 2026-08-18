@@ -30,7 +30,7 @@ export default function CampagnesPage() {
         .from('campaigns')
         .select(
           `
-          id, title, description, budget, category, creator_id, created_at,
+          id, title, description, budget, category, image_url, creator_id, created_at,
           creator:creator_id ( full_name, account_type, city, is_certified )
         `
         )
@@ -121,6 +121,14 @@ export default function CampagnesPage() {
 
             return (
               <div key={c.id} className="bg-white border rounded-xl p-4 shadow-sm">
+                {c.image_url && (
+                  <img
+                    src={c.image_url}
+                    alt={c.title}
+                    className="w-full h-40 object-cover rounded-lg mb-3"
+                  />
+                )}
+
                 <div className="flex items-start justify-between mb-2">
                   <h2 className="font-semibold text-gray-900">{c.title}</h2>
                   {c.category && (
