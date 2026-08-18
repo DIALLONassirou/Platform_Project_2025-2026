@@ -18,6 +18,12 @@ export default function HomePage() {
 
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mb-4">
         <Link
+          href="/campagnes"
+          className="flex-1 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold text-center shadow-lg shadow-blue-200 hover:from-blue-700 hover:to-blue-600 transition"
+        >
+          Voir les campagnes
+        </Link>
+        <Link
           href="/annuaire?type=influencer"
           className="flex-1 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold text-center shadow-lg shadow-blue-200 hover:from-blue-700 hover:to-blue-600 transition"
         >
