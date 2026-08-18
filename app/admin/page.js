@@ -16,7 +16,10 @@ export default function AdminPage() {
   const [reports, setReports] = useState([])
   const [loadingReports, setLoadingReports] = useState(true)
 
-  const [tab, setTab] = useState('validations') // 'validations' ou 'signalements'
+  const [certRequests, setCertRequests] = useState([])
+  const [loadingCertRequests, setLoadingCertRequests] = useState(true)
+
+  const [tab, setTab] = useState('validations') // 'validations', 'signalements' ou 'certifications'
 
   useEffect(() => {
     async function checkAccess() {
@@ -76,10 +79,28 @@ export default function AdminPage() {
     setLoadingReports(false)
   }
 
+  async function fetchCertRequests() {
+    setLoadingCertRequests(true)
+    const { data, error } = await supabase
+      .from('certification_requests')
+      .select(
+        `
+        id, message, created_at,
+        profile:profile_id ( id, full_name, account_type, city )
+      `
+      )
+      .eq('status', 'pending')
+      .order('created_at')
+
+    if (!error) setCertRequests(data)
+    setLoadingCertRequests(false)
+  }
+
   useEffect(() => {
     if (isAdmin) {
       fetchPending()
       fetchReports()
+      fetchCertRequests()
     }
   }, [isAdmin])
 
@@ -103,6 +124,23 @@ export default function AdminPage() {
     await supabase.from('profiles').update({ is_active: false }).eq('id', reportedId)
     alert('Profil désactivé.')
     fetchPending()
+  }
+
+  async function approveCertification(requestId, profileId) {
+    await supabase.from('profiles').update({ is_certified: true }).eq('id', profileId)
+    await supabase
+      .from('certification_requests')
+      .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+      .eq('id', requestId)
+    fetchCertRequests()
+  }
+
+  async function rejectCertification(requestId) {
+    await supabase
+      .from('certification_requests')
+      .update({ status: 'rejected', reviewed_at: new Date().toISOString() })
+      .eq('id', requestId)
+    fetchCertRequests()
   }
 
   if (checkingAccess) return <p className="p-6">Vérification des accès...</p>
@@ -131,6 +169,14 @@ export default function AdminPage() {
           }`}
         >
           Signalements ({pendingReportsCount})
+        </button>
+        <button
+          onClick={() => setTab('certifications')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold ${
+            tab === 'certifications' ? 'bg-yellow-500 text-white' : 'bg-gray-100 text-gray-700'
+          }`}
+        >
+          Certifications ({certRequests.length})
         </button>
       </div>
 
@@ -217,6 +263,45 @@ export default function AdminPage() {
                     </button>
                   </div>
                 )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Onglet Certifications */}
+      {tab === 'certifications' && (
+        <div>
+          {loadingCertRequests && <p>Chargement...</p>}
+          {!loadingCertRequests && certRequests.length === 0 && (
+            <p>Aucune demande de certification en attente.</p>
+          )}
+
+          <div className="space-y-4">
+            {certRequests.map((r) => (
+              <div key={r.id} className="border rounded-lg p-4">
+                <p className="font-semibold">
+                  {r.profile?.full_name || 'Utilisateur supprimé'}
+                </p>
+                <p className="text-xs text-gray-500 mb-2">
+                  {r.profile?.account_type === 'influencer' ? 'Influenceur' : 'Entreprise'} —{' '}
+                  {r.profile?.city} — {new Date(r.created_at).toLocaleDateString('fr-FR')}
+                </p>
+                <p className="text-sm text-gray-700 mb-3">{r.message}</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => approveCertification(r.id, r.profile.id)}
+                    className="px-3 py-1 rounded-lg bg-green-600 text-white text-sm"
+                  >
+                    Certifier ⭐
+                  </button>
+                  <button
+                    onClick={() => rejectCertification(r.id)}
+                    className="px-3 py-1 rounded-lg bg-red-600 text-white text-sm"
+                  >
+                    Rejeter
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -17,6 +17,10 @@ export default function ProfilPage() {
   const [detail, setDetail] = useState({})
   const [initialProfile, setInitialProfile] = useState(null)
   const [initialDetail, setInitialDetail] = useState({})
+  const [certRequest, setCertRequest] = useState(null)
+  const [requestingCert, setRequestingCert] = useState(false)
+  const [certMessage, setCertMessage] = useState('')
+  const [sendingCert, setSendingCert] = useState(false)
 
   useEffect(() => {
     async function loadProfile() {
@@ -49,11 +53,48 @@ export default function ProfilPage() {
 
       setDetail(detailData || {})
       setInitialDetail(detailData || {})
+
+      const { data: certData } = await supabase
+        .from('certification_requests')
+        .select('id, status')
+        .eq('profile_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      setCertRequest(certData || null)
       setLoading(false)
     }
 
     loadProfile()
   }, [])
+
+  async function handleSendCertRequest() {
+    const trimmed = certMessage.trim()
+    if (trimmed.length < 10) {
+      alert('Merci de décrire en quelques mots pourquoi tu demandes la certification (au moins 10 caractères).')
+      return
+    }
+
+    setSendingCert(true)
+
+    const { error } = await supabase.from('certification_requests').insert({
+      profile_id: profile.id,
+      message: trimmed,
+    })
+
+    setSendingCert(false)
+
+    if (error) {
+      alert("Erreur lors de l'envoi de la demande : " + error.message)
+      return
+    }
+
+    setCertRequest({ status: 'pending' })
+    setRequestingCert(false)
+    setCertMessage('')
+    alert('Demande de certification envoyée. Notre équipe va l’examiner.')
+  }
 
   function handleCancel() {
     setProfile(initialProfile)
@@ -179,7 +220,14 @@ export default function ProfilPage() {
               <div className="w-16 h-16 rounded-full bg-gray-200" />
             )}
             <div>
-              <p className="font-semibold text-gray-900">{profile.full_name || '—'}</p>
+              <p className="font-semibold text-gray-900 flex items-center gap-1">
+                {profile.full_name || '—'}
+                {profile.is_certified && (
+                  <span title="Compte certifié" className="text-yellow-500">
+                    ⭐
+                  </span>
+                )}
+              </p>
               <p className="text-sm text-gray-500">{profile.city || '—'}</p>
             </div>
           </div>
@@ -188,6 +236,61 @@ export default function ProfilPage() {
             <span className="text-gray-500">Téléphone / WhatsApp : </span>
             {profile.phone || '—'}
           </p>
+
+          <div className="border rounded-lg p-3">
+            {profile.is_certified ? (
+              <p className="text-sm text-green-700">⭐ Ton compte est certifié.</p>
+            ) : certRequest?.status === 'pending' ? (
+              <p className="text-sm text-gray-600">
+                Ta demande de certification est en attente d'examen par notre équipe.
+              </p>
+            ) : requestingCert ? (
+              <div className="space-y-2">
+                <textarea
+                  placeholder="Explique en quelques mots pourquoi tu demandes la certification..."
+                  value={certMessage}
+                  onChange={(e) => setCertMessage(e.target.value)}
+                  className="w-full border rounded-lg p-2 text-sm"
+                  rows={3}
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRequestingCert(false)
+                      setCertMessage('')
+                    }}
+                    className="flex-1 py-2 rounded-lg border text-gray-700 text-sm"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendCertRequest}
+                    disabled={sendingCert}
+                    className="flex-1 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold disabled:opacity-50"
+                  >
+                    {sendingCert ? 'Envoi...' : 'Envoyer la demande'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                {certRequest?.status === 'rejected' && (
+                  <p className="text-xs text-red-600 mb-2">
+                    Ta précédente demande a été rejetée. Tu peux en soumettre une nouvelle.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setRequestingCert(true)}
+                  className="w-full py-2 rounded-lg border border-blue-500 text-blue-600 text-sm font-semibold"
+                >
+                  Demander la certification ⭐
+                </button>
+              </div>
+            )}
+          </div>
 
           {profile.account_type === 'influencer' ? (
             <>

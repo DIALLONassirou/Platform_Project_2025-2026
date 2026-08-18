@@ -29,8 +29,8 @@ function AnnuaireContent() {
 
       const selectFields =
         accountType === 'influencer'
-          ? `id, full_name, city, influencer_profiles ( bio, categories, whatsapp_number, photo_url, price_range, ${SOCIAL_SELECT_FIELDS} )`
-          : `id, full_name, city, phone, business_profiles ( company_name, sector, description, logo_url, website_url )`
+          ? `id, full_name, city, is_certified, influencer_profiles ( bio, categories, whatsapp_number, photo_url, price_range, ${SOCIAL_SELECT_FIELDS} )`
+          : `id, full_name, city, phone, is_certified, business_profiles ( company_name, sector, description, logo_url, website_url )`
 
       let query = supabase
         .from('profiles')
@@ -200,7 +200,14 @@ function AnnuaireContent() {
                       <div className="w-14 h-14 rounded-full bg-gray-200" />
                     )}
                     <div>
-                      <h2 className="font-semibold text-gray-900">{inf.full_name}</h2>
+                      <h2 className="font-semibold text-gray-900 flex items-center gap-1">
+                        {inf.full_name}
+                        {inf.is_certified && (
+                          <span title="Compte certifié" className="text-yellow-500">
+                            ⭐
+                          </span>
+                        )}
+                      </h2>
                       <p className="text-sm text-gray-500">{inf.city}</p>
                     </div>
                   </div>
@@ -277,8 +284,13 @@ function AnnuaireContent() {
                       <div className="w-14 h-14 rounded-full bg-gray-200" />
                     )}
                     <div>
-                      <h2 className="font-semibold text-gray-900">
+                      <h2 className="font-semibold text-gray-900 flex items-center gap-1">
                         {biz.business_profiles?.company_name || biz.full_name}
+                        {biz.is_certified && (
+                          <span title="Compte certifié" className="text-yellow-500">
+                            ⭐
+                          </span>
+                        )}
                       </h2>
                       <p className="text-sm text-gray-500">{biz.city}</p>
                     </div>
