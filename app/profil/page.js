@@ -12,8 +12,11 @@ export default function ProfilPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [profile, setProfile] = useState(null)
   const [detail, setDetail] = useState({})
+  const [initialProfile, setInitialProfile] = useState(null)
+  const [initialDetail, setInitialDetail] = useState({})
 
   useEffect(() => {
     async function loadProfile() {
@@ -33,6 +36,7 @@ export default function ProfilPage() {
         .single()
 
       setProfile(profileData)
+      setInitialProfile(profileData)
 
       const table =
         profileData.account_type === 'influencer' ? 'influencer_profiles' : 'business_profiles'
@@ -44,11 +48,18 @@ export default function ProfilPage() {
         .single()
 
       setDetail(detailData || {})
+      setInitialDetail(detailData || {})
       setLoading(false)
     }
 
     loadProfile()
   }, [])
+
+  function handleCancel() {
+    setProfile(initialProfile)
+    setDetail(initialDetail)
+    setEditing(false)
+  }
 
   async function handleImageUpload(e) {
     const file = e.target.files[0]
@@ -106,7 +117,10 @@ export default function ProfilPage() {
       })
       .eq('id', profile.id)
 
+    setInitialProfile(profile)
+    setInitialDetail(payload)
     setSaving(false)
+    setEditing(false)
     alert('Profil mis à jour !')
   }
 
@@ -152,6 +166,91 @@ export default function ProfilPage() {
         </div>
       )}
 
+      {!editing && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            {(profile.account_type === 'influencer' ? detail.photo_url : detail.logo_url) ? (
+              <img
+                src={profile.account_type === 'influencer' ? detail.photo_url : detail.logo_url}
+                alt="Aperçu"
+                className="w-16 h-16 rounded-full object-cover border"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-gray-200" />
+            )}
+            <div>
+              <p className="font-semibold text-gray-900">{profile.full_name || '—'}</p>
+              <p className="text-sm text-gray-500">{profile.city || '—'}</p>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-700">
+            <span className="text-gray-500">Téléphone / WhatsApp : </span>
+            {profile.phone || '—'}
+          </p>
+
+          {profile.account_type === 'influencer' ? (
+            <>
+              {detail.bio && <p className="text-sm text-gray-700">{detail.bio}</p>}
+
+              {detail.categories?.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {detail.categories.map((cat) => (
+                    <span key={cat} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                      {cat}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {SOCIAL_PLATFORMS.some(({ key }) => detail[`${key}_url`]) && (
+                <div className="flex flex-wrap gap-1">
+                  {SOCIAL_PLATFORMS.map(({ key, label }) => {
+                    const url = detail[`${key}_url`]
+                    if (!url) return null
+                    const followers = detail[`${key}_followers`]
+                    return (
+                      <a
+                        key={key}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-200"
+                      >
+                        {label}
+                        {followers ? ` · ${followers}` : ''}
+                      </a>
+                    )
+                  })}
+                </div>
+              )}
+
+              {detail.price_range && (
+                <p className="text-xs text-gray-500">Tarif indicatif : {detail.price_range}</p>
+              )}
+            </>
+          ) : (
+            <>
+              {detail.sector && (
+                <p className="text-xs text-blue-700 bg-blue-100 inline-block px-2 py-1 rounded-full">
+                  {detail.sector}
+                </p>
+              )}
+              {detail.description && <p className="text-sm text-gray-700">{detail.description}</p>}
+            </>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold"
+          >
+            Modifier mon profil
+          </button>
+        </div>
+      )}
+
+      {editing && (
       <form onSubmit={handleSave} className="space-y-4">
         <div className="flex items-center gap-4 mb-2">
           {(profile.account_type === 'influencer' ? detail.photo_url : detail.logo_url) ? (
@@ -299,14 +398,24 @@ export default function ProfilPage() {
           </>
         )}
 
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-50"
-        >
-          {saving ? 'Enregistrement...' : 'Enregistrer'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="flex-1 py-3 rounded-lg border text-gray-700 font-semibold"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 py-3 rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-50"
+          >
+            {saving ? 'Enregistrement...' : 'Enregistrer'}
+          </button>
+        </div>
       </form>
+      )}
 
       <div className="mt-8 pt-6 border-t">
         <h2 className="font-semibold mb-3">Changer le mot de passe</h2>
