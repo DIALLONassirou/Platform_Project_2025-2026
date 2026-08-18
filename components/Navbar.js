@@ -103,6 +103,14 @@ export default function Navbar() {
             </button>
           </div>
 
+          <Link
+            href="/campagnes"
+            onClick={() => setMenuOpen(false)}
+            className="text-gray-700 hover:text-blue-600"
+          >
+            Campagnes
+          </Link>
+
           {!loading && user && (
             <>
               <Link
