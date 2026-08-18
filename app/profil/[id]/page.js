@@ -61,7 +61,7 @@ export default function PublicProfilePage() {
 
       const { data: campaignsData } = await supabase
         .from('campaigns')
-        .select('id, title, budget, category')
+        .select('id, title, description, budget, category, image_url')
         .eq('creator_id', id)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
@@ -268,6 +268,13 @@ export default function PublicProfilePage() {
                 href="/campagnes"
                 className="block border rounded-lg p-3 hover:bg-gray-50"
               >
+                {c.image_url && (
+                  <img
+                    src={c.image_url}
+                    alt={c.title}
+                    className="w-full h-32 object-cover rounded-lg mb-2"
+                  />
+                )}
                 <div className="flex items-start justify-between">
                   <p className="font-medium text-gray-900 text-sm">{c.title}</p>
                   {c.category && (
@@ -276,6 +283,9 @@ export default function PublicProfilePage() {
                     </span>
                   )}
                 </div>
+                {c.description && (
+                  <p className="text-xs text-gray-600 mt-1">{c.description}</p>
+                )}
                 {c.budget && (
                   <p className="text-xs text-gray-500 mt-1">Budget indicatif : {c.budget}</p>
                 )}
