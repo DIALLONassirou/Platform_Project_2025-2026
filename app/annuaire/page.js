@@ -183,7 +183,7 @@ function AnnuaireContent() {
           {accountType === 'influencer'
             ? filtered.map((inf) => (
                 <div key={inf.id} className="bg-white border rounded-xl p-4 shadow-sm">
-                  <div className="flex items-center gap-3 mb-3">
+                  <Link href={`/profil/${inf.id}`} className="flex items-center gap-3 mb-3">
                     {inf.influencer_profiles?.photo_url ? (
                       <img
                         src={inf.influencer_profiles.photo_url}
@@ -194,7 +194,7 @@ function AnnuaireContent() {
                       <div className="w-14 h-14 rounded-full bg-gray-200" />
                     )}
                     <div>
-                      <h2 className="font-semibold text-gray-900 flex items-center gap-1">
+                      <h2 className="font-semibold text-gray-900 flex items-center gap-1 hover:underline">
                         {inf.full_name}
                         {inf.is_certified && (
                           <span title="Compte certifié" className="text-yellow-500">
@@ -204,7 +204,7 @@ function AnnuaireContent() {
                       </h2>
                       <p className="text-sm text-gray-500">{inf.city}</p>
                     </div>
-                  </div>
+                  </Link>
 
                   {inf.influencer_profiles?.bio && (
                     <p className="text-sm text-gray-700 mb-2">{inf.influencer_profiles.bio}</p>
@@ -266,7 +266,7 @@ function AnnuaireContent() {
               ))
             : filtered.map((biz) => (
                 <div key={biz.id} className="bg-white border rounded-xl p-4 shadow-sm">
-                  <div className="flex items-center gap-3 mb-3">
+                  <Link href={`/profil/${biz.id}`} className="flex items-center gap-3 mb-3">
                     {biz.business_profiles?.logo_url ? (
                       <img
                         src={biz.business_profiles.logo_url}
@@ -277,7 +277,7 @@ function AnnuaireContent() {
                       <div className="w-14 h-14 rounded-full bg-gray-200" />
                     )}
                     <div>
-                      <h2 className="font-semibold text-gray-900 flex items-center gap-1">
+                      <h2 className="font-semibold text-gray-900 flex items-center gap-1 hover:underline">
                         {biz.business_profiles?.company_name || biz.full_name}
                         {biz.is_certified && (
                           <span title="Compte certifié" className="text-yellow-500">
@@ -287,7 +287,7 @@ function AnnuaireContent() {
                       </h2>
                       <p className="text-sm text-gray-500">{biz.city}</p>
                     </div>
-                  </div>
+                  </Link>
 
                   {biz.business_profiles?.sector && (
                     <p className="text-xs text-blue-700 bg-blue-100 inline-block px-2 py-1 rounded-full mb-2">
