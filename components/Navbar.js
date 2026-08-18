@@ -103,25 +103,8 @@ export default function Navbar() {
             </button>
           </div>
 
-          {!loading && isAdmin && (
-            <Link
-              href="/admin"
-              onClick={() => setMenuOpen(false)}
-              className="text-purple-700 font-semibold hover:text-purple-900"
-            >
-              Admin
-            </Link>
-          )}
-
           {!loading && user && (
             <>
-              <Link
-                href="/messages"
-                onClick={() => setMenuOpen(false)}
-                className="text-gray-700 hover:text-blue-600"
-              >
-                Messages
-              </Link>
               <Link
                 href="/profil"
                 onClick={() => setMenuOpen(false)}
@@ -129,6 +112,22 @@ export default function Navbar() {
               >
                 Mon profil
               </Link>
+              <Link
+                href="/messages"
+                onClick={() => setMenuOpen(false)}
+                className="text-gray-700 hover:text-blue-600"
+              >
+                Messages
+              </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-purple-700 font-semibold hover:text-purple-900"
+                >
+                  Admin
+                </Link>
+              )}
               <button
                 onClick={handleLogout}
                 className="text-left text-red-600 hover:underline"
