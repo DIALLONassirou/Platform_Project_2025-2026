@@ -97,6 +97,15 @@ export default function ProfilPage() {
 
     await supabase.from(table).update(payload).eq('id', profile.id)
 
+    await supabase
+      .from('profiles')
+      .update({
+        full_name: profile.full_name,
+        city: profile.city,
+        phone: profile.phone,
+      })
+      .eq('id', profile.id)
+
     setSaving(false)
     alert('Profil mis à jour !')
   }
@@ -171,6 +180,30 @@ export default function ProfilPage() {
             </label>
           </div>
         </div>
+
+        <input
+          type="text"
+          placeholder={profile.account_type === 'influencer' ? 'Nom complet' : "Nom de l'entreprise"}
+          value={profile.full_name || ''}
+          onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+          className="w-full border rounded-lg p-3"
+        />
+
+        <input
+          type="tel"
+          placeholder="Numéro de téléphone (WhatsApp)"
+          value={profile.phone || ''}
+          onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+          className="w-full border rounded-lg p-3"
+        />
+
+        <input
+          type="text"
+          placeholder="Ville (ex: Conakry)"
+          value={profile.city || ''}
+          onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+          className="w-full border rounded-lg p-3"
+        />
 
         {profile.account_type === 'influencer' ? (
           <>
