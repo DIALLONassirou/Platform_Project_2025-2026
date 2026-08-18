@@ -334,6 +334,14 @@ export default function ProfilPage() {
             </>
           )}
 
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold"
+          >
+            Modifier mon profil
+          </button>
+
           <div className="border rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-semibold text-gray-700">Mes campagnes</p>
@@ -383,14 +391,6 @@ export default function ProfilPage() {
               </div>
             )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold"
-          >
-            Modifier mon profil
-          </button>
         </div>
       )}
 
