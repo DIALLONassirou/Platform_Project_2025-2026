@@ -121,6 +121,13 @@ export default function Navbar() {
                 Mon profil
               </Link>
               <Link
+                href="/profil/mot-de-passe"
+                onClick={() => setMenuOpen(false)}
+                className="text-gray-700 hover:text-blue-600"
+              >
+                Modifier mon mot de passe
+              </Link>
+              <Link
                 href="/messages"
                 onClick={() => setMenuOpen(false)}
                 className="text-gray-700 hover:text-blue-600"

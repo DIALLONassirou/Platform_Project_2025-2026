@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { SOCIAL_PLATFORMS } from '@/lib/socialPlatforms'
 
@@ -21,6 +22,7 @@ export default function ProfilPage() {
   const [requestingCert, setRequestingCert] = useState(false)
   const [certMessage, setCertMessage] = useState('')
   const [sendingCert, setSendingCert] = useState(false)
+  const [campaigns, setCampaigns] = useState([])
 
   useEffect(() => {
     async function loadProfile() {
@@ -63,6 +65,14 @@ export default function ProfilPage() {
         .maybeSingle()
 
       setCertRequest(certData || null)
+
+      const { data: campaignsData } = await supabase
+        .from('campaigns')
+        .select('id, title, description, budget, category, image_url, is_active')
+        .eq('creator_id', user.id)
+        .order('created_at', { ascending: false })
+
+      setCampaigns(campaignsData || [])
       setLoading(false)
     }
 
@@ -163,26 +173,6 @@ export default function ProfilPage() {
     setSaving(false)
     setEditing(false)
     alert('Profil mis à jour !')
-  }
-
-  async function handlePasswordChange(e) {
-    e.preventDefault()
-    const newPassword = e.target.newPassword.value
-
-    if (newPassword.length < 6) {
-      alert('Le mot de passe doit contenir au moins 6 caractères.')
-      return
-    }
-
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-
-    if (error) {
-      alert('Erreur : ' + error.message)
-      return
-    }
-
-    alert('Mot de passe mis à jour avec succès ! Note-le bien quelque part.')
-    e.target.reset()
   }
 
   async function handleLogout() {
@@ -343,6 +333,56 @@ export default function ProfilPage() {
               {detail.description && <p className="text-sm text-gray-700">{detail.description}</p>}
             </>
           )}
+
+          <div className="border rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-gray-700">Mes campagnes</p>
+              <Link href="/campagnes/nouvelle" className="text-xs text-blue-600 hover:underline">
+                + Publier une campagne
+              </Link>
+            </div>
+
+            {campaigns.length === 0 ? (
+              <p className="text-xs text-gray-500">Tu n&apos;as encore publié aucune campagne.</p>
+            ) : (
+              <div className="space-y-2">
+                {campaigns.map((c) => (
+                  <div key={c.id} className="border rounded-lg p-3">
+                    {c.image_url && (
+                      <img
+                        src={c.image_url}
+                        alt={c.title}
+                        className="w-full h-28 object-cover rounded-lg mb-2"
+                      />
+                    )}
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-gray-900 text-sm">{c.title}</p>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full shrink-0 ${
+                          c.is_active
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        {c.is_active ? 'Active' : 'Clôturée'}
+                      </span>
+                    </div>
+                    {c.category && (
+                      <span className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full mt-1">
+                        {c.category}
+                      </span>
+                    )}
+                    {c.description && (
+                      <p className="text-xs text-gray-600 mt-1">{c.description}</p>
+                    )}
+                    {c.budget && (
+                      <p className="text-xs text-gray-500 mt-1">Budget indicatif : {c.budget}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           <button
             type="button"
@@ -521,26 +561,6 @@ export default function ProfilPage() {
         </div>
       </form>
       )}
-
-      <div className="mt-8 pt-6 border-t">
-        <h2 className="font-semibold mb-3">Changer le mot de passe</h2>
-        <form onSubmit={handlePasswordChange} className="flex gap-2">
-          <input
-            type="password"
-            name="newPassword"
-            placeholder="Nouveau mot de passe"
-            required
-            minLength={6}
-            className="flex-1 border rounded-lg p-3"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 rounded-lg bg-gray-700 text-white text-sm font-semibold"
-          >
-            Modifier
-          </button>
-        </form>
-      </div>
     </div>
   )
 }
