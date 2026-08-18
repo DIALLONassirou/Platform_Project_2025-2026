@@ -60,23 +60,23 @@ export default function Navbar() {
 
   return (
     <nav className="border-b bg-white sticky top-0 z-10">
-      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
+        <button
+          onClick={() => setMenuOpen(true)}
+          aria-label="Ouvrir le menu"
+          className="text-gray-700 hover:text-blue-600 text-xl leading-none px-1"
+        >
+          ☰
+        </button>
+
         <Link href="/" className="font-bold text-blue-600">
           Plateforme Influenceurs
         </Link>
 
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-4 text-sm ml-auto">
           <Link href="/annuaire" className="text-gray-700 hover:text-blue-600">
             Annuaire
           </Link>
-
-          <button
-            onClick={() => setMenuOpen(true)}
-            aria-label="Ouvrir le menu"
-            className="text-gray-700 hover:text-blue-600 text-xl leading-none px-1"
-          >
-            ⋯
-          </button>
         </div>
       </div>
 
@@ -88,8 +88,8 @@ export default function Navbar() {
           onClick={() => setMenuOpen(false)}
         />
         <div
-          className={`absolute right-0 top-0 h-full w-64 bg-white shadow-xl p-6 flex flex-col gap-4 text-sm transition-transform duration-200 ${
-            menuOpen ? 'translate-x-0' : 'translate-x-full'
+          className={`absolute left-0 top-0 h-full w-64 bg-white shadow-xl p-6 flex flex-col gap-4 text-sm transition-transform duration-200 ${
+            menuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
           <div className="flex justify-between items-center mb-2">
