@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { REACTIONS } from '@/lib/reactions'
 
 const CATEGORIES = ['mode', 'beauté', 'food', 'lifestyle', 'tech', 'événementiel']
 
@@ -17,6 +18,8 @@ export default function CampagnesPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [interestsByCampaign, setInterestsByCampaign] = useState({})
   const [expandedId, setExpandedId] = useState(null)
+  const [reactionsByCampaign, setReactionsByCampaign] = useState({})
+  const [pickerOpenFor, setPickerOpenFor] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -38,11 +41,58 @@ export default function CampagnesPage() {
         .order('created_at', { ascending: false })
 
       if (!error) setCampaigns(data || [])
+
+      const campaignIds = (data || []).map((c) => c.id)
+      if (campaignIds.length > 0) {
+        const { data: reactionsData } = await supabase
+          .from('campaign_reactions')
+          .select('id, campaign_id, user_id, emoji')
+          .in('campaign_id', campaignIds)
+
+        const grouped = {}
+        ;(reactionsData || []).forEach((r) => {
+          if (!grouped[r.campaign_id]) grouped[r.campaign_id] = []
+          grouped[r.campaign_id].push(r)
+        })
+        setReactionsByCampaign(grouped)
+      }
+
       setLoading(false)
     }
 
     load()
   }, [])
+
+  async function toggleReaction(campaignId, emoji) {
+    if (!currentUserId) {
+      router.push('/connexion')
+      return
+    }
+
+    setPickerOpenFor(null)
+
+    const existing = (reactionsByCampaign[campaignId] || []).find(
+      (r) => r.user_id === currentUserId
+    )
+
+    if (existing && existing.emoji === emoji) {
+      await supabase.from('campaign_reactions').delete().eq('id', existing.id)
+    } else {
+      await supabase
+        .from('campaign_reactions')
+        .upsert(
+          { campaign_id: campaignId, user_id: currentUserId, emoji },
+          { onConflict: 'campaign_id,user_id' }
+        )
+    }
+
+    const { data } = await supabase
+      .from('campaign_reactions')
+      .select('id, campaign_id, user_id, emoji')
+      .eq('campaign_id', campaignId)
+
+    setReactionsByCampaign((prev) => ({ ...prev, [campaignId]: data || [] }))
+  }
 
   const filtered = campaigns.filter((c) => !categoryFilter || c.category === categoryFilter)
 
@@ -173,6 +223,54 @@ export default function CampagnesPage() {
                   </span>
                   {c.creator?.city ? ` · ${c.creator.city}` : ''}
                 </p>
+
+                <div className="relative mb-3">
+                  <div className="flex flex-wrap items-center gap-1">
+                    {REACTIONS.map((emoji) => {
+                      const count = (reactionsByCampaign[c.id] || []).filter(
+                        (r) => r.emoji === emoji
+                      ).length
+                      if (count === 0) return null
+                      const mine = (reactionsByCampaign[c.id] || []).some(
+                        (r) => r.emoji === emoji && r.user_id === currentUserId
+                      )
+                      return (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => toggleReaction(c.id, emoji)}
+                          className={`text-xs px-2 py-1 rounded-full border ${
+                            mine ? 'bg-blue-50 border-blue-400' : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          {emoji} {count}
+                        </button>
+                      )
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setPickerOpenFor(pickerOpenFor === c.id ? null : c.id)}
+                      className="text-xs px-2 py-1 rounded-full border bg-white border-gray-200 text-gray-500"
+                    >
+                      + Réagir
+                    </button>
+                  </div>
+
+                  {pickerOpenFor === c.id && (
+                    <div className="flex gap-1 mt-1 bg-white border rounded-full shadow-md px-2 py-1 w-fit">
+                      {REACTIONS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => toggleReaction(c.id, emoji)}
+                          className="text-base hover:scale-125 transition-transform"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {isMine ? (
                   <div>
