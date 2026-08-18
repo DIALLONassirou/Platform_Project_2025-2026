@@ -76,6 +76,9 @@ export default function Navbar() {
 
           {!loading && user && (
             <>
+              <Link href="/messages" className="text-gray-700 hover:text-blue-600">
+                Messages
+              </Link>
               <Link href="/profil" className="text-gray-700 hover:text-blue-600">
                 Mon profil
               </Link>

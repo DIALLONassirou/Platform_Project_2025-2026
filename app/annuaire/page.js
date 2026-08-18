@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { SOCIAL_PLATFORMS } from '@/lib/socialPlatforms'
 
@@ -54,13 +55,6 @@ function AnnuaireContent() {
     if (accountType !== 'influencer' || !categoryFilter) return true
     return p.influencer_profiles?.categories?.includes(categoryFilter)
   })
-
-  function contactWhatsApp(whatsappNumber, name) {
-    const message = encodeURIComponent(
-      `Bonjour ${name}, je vous contacte via la plateforme pour une collaboration marketing. Seriez-vous disponible pour en discuter ?`
-    )
-    window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${message}`, '_blank')
-  }
 
   async function submitReport() {
     const trimmedReason = reportReason.trim()
@@ -254,14 +248,12 @@ function AnnuaireContent() {
                     </div>
                   )}
 
-                  <button
-                    onClick={() =>
-                      contactWhatsApp(inf.influencer_profiles.whatsapp_number, inf.full_name)
-                    }
-                    className="w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 mb-2"
+                  <Link
+                    href={`/messages/${inf.id}`}
+                    className="block text-center w-full py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 mb-2"
                   >
-                    Contacter sur WhatsApp
-                  </button>
+                    Envoyer un message
+                  </Link>
 
                   <button
                     onClick={() => setReportingId(inf.id)}
@@ -306,12 +298,12 @@ function AnnuaireContent() {
                     <p className="text-sm text-gray-700 mb-3">{biz.business_profiles.description}</p>
                   )}
 
-                  <button
-                    onClick={() => contactWhatsApp(biz.phone, biz.full_name)}
-                    className="w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 mb-2"
+                  <Link
+                    href={`/messages/${biz.id}`}
+                    className="block text-center w-full py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 mb-2"
                   >
-                    Contacter sur WhatsApp
-                  </button>
+                    Envoyer un message
+                  </Link>
 
                   <button
                     onClick={() => setReportingId(biz.id)}
