@@ -307,8 +307,8 @@ export default function ProfilPage() {
               )}
 
               {SOCIAL_PLATFORMS.some(({ key }) => detail[`${key}_url`]) && (
-                <div className="flex flex-wrap gap-1">
-                  {SOCIAL_PLATFORMS.map(({ key, label }) => {
+                <div className="flex flex-wrap gap-2">
+                  {SOCIAL_PLATFORMS.map(({ key, label, Icon, color }) => {
                     const url = detail[`${key}_url`]
                     if (!url) return null
                     const followers = detail[`${key}_followers`]
@@ -318,10 +318,11 @@ export default function ProfilPage() {
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-200"
+                        title={label}
+                        className="flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-200"
                       >
-                        {label}
-                        {followers ? ` · ${followers}` : ''}
+                        <Icon style={{ color }} className="w-3.5 h-3.5" />
+                        {followers ? followers : ''}
                       </a>
                     )
                   })}
@@ -449,8 +450,9 @@ export default function ProfilPage() {
             <div>
               <p className="text-sm text-gray-600 mb-2">Réseaux sociaux</p>
               <div className="space-y-2">
-                {SOCIAL_PLATFORMS.map(({ key, label }) => (
-                  <div key={key} className="grid grid-cols-2 gap-2">
+                {SOCIAL_PLATFORMS.map(({ key, label, Icon, color }) => (
+                  <div key={key} className="flex items-center gap-2">
+                    <Icon style={{ color }} className="w-4 h-4 shrink-0" title={label} />
                     <input
                       type="text"
                       placeholder={`Lien ${label}`}

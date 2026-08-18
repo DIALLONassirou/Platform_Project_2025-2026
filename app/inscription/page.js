@@ -272,8 +272,9 @@ export default function InscriptionPage() {
                 Renseigne uniquement les réseaux que tu utilises (facultatif).
               </p>
               <div className="space-y-3">
-                {SOCIAL_PLATFORMS.map(({ key, label }) => (
-                  <div key={key} className="grid grid-cols-2 gap-2">
+                {SOCIAL_PLATFORMS.map(({ key, label, Icon, color }) => (
+                  <div key={key} className="flex items-center gap-2">
+                    <Icon style={{ color }} className="w-4 h-4 shrink-0" title={label} />
                     <input
                       type="text"
                       placeholder={`Lien ${label}`}

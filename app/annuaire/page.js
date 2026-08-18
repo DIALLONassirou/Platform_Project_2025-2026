@@ -227,8 +227,8 @@ function AnnuaireContent() {
                   )}
 
                   {SOCIAL_PLATFORMS.some(({ key }) => inf.influencer_profiles?.[`${key}_url`]) && (
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {SOCIAL_PLATFORMS.map(({ key, label }) => {
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {SOCIAL_PLATFORMS.map(({ key, label, Icon, color }) => {
                         const url = inf.influencer_profiles?.[`${key}_url`]
                         if (!url) return null
                         const followers = inf.influencer_profiles?.[`${key}_followers`]
@@ -238,10 +238,11 @@ function AnnuaireContent() {
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-200"
+                            title={label}
+                            className="flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-200"
                           >
-                            {label}
-                            {followers ? ` · ${followers}` : ''}
+                            <Icon style={{ color }} className="w-3.5 h-3.5" />
+                            {followers ? followers : ''}
                           </a>
                         )
                       })}
