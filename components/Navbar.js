@@ -11,6 +11,7 @@ export default function Navbar() {
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     async function checkUser() {
@@ -53,6 +54,7 @@ export default function Navbar() {
 
   async function handleLogout() {
     await supabase.auth.signOut()
+    setMenuOpen(false)
     router.push('/connexion')
   }
 
@@ -68,21 +70,69 @@ export default function Navbar() {
             Annuaire
           </Link>
 
+          <button
+            onClick={() => setMenuOpen(true)}
+            aria-label="Ouvrir le menu"
+            className="text-gray-700 hover:text-blue-600 text-xl leading-none px-1"
+          >
+            ⋯
+          </button>
+        </div>
+      </div>
+
+      <div className={`fixed inset-0 z-20 ${menuOpen ? '' : 'pointer-events-none'}`}>
+        <div
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+            menuOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={() => setMenuOpen(false)}
+        />
+        <div
+          className={`absolute right-0 top-0 h-full w-64 bg-white shadow-xl p-6 flex flex-col gap-4 text-sm transition-transform duration-200 ${
+            menuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <div className="flex justify-between items-center mb-2">
+            <span className="font-semibold text-gray-900">Menu</span>
+            <button
+              onClick={() => setMenuOpen(false)}
+              aria-label="Fermer le menu"
+              className="text-gray-500 hover:text-gray-800 text-xl leading-none"
+            >
+              ×
+            </button>
+          </div>
+
           {!loading && isAdmin && (
-            <Link href="/admin" className="text-purple-700 font-semibold hover:text-purple-900">
+            <Link
+              href="/admin"
+              onClick={() => setMenuOpen(false)}
+              className="text-purple-700 font-semibold hover:text-purple-900"
+            >
               Admin
             </Link>
           )}
 
           {!loading && user && (
             <>
-              <Link href="/messages" className="text-gray-700 hover:text-blue-600">
+              <Link
+                href="/messages"
+                onClick={() => setMenuOpen(false)}
+                className="text-gray-700 hover:text-blue-600"
+              >
                 Messages
               </Link>
-              <Link href="/profil" className="text-gray-700 hover:text-blue-600">
+              <Link
+                href="/profil"
+                onClick={() => setMenuOpen(false)}
+                className="text-gray-700 hover:text-blue-600"
+              >
                 Mon profil
               </Link>
-              <button onClick={handleLogout} className="text-red-600 hover:underline">
+              <button
+                onClick={handleLogout}
+                className="text-left text-red-600 hover:underline"
+              >
                 Se déconnecter
               </button>
             </>
@@ -90,12 +140,17 @@ export default function Navbar() {
 
           {!loading && !user && (
             <>
-              <Link href="/connexion" className="text-gray-700 hover:text-blue-600">
+              <Link
+                href="/connexion"
+                onClick={() => setMenuOpen(false)}
+                className="text-gray-700 hover:text-blue-600"
+              >
                 Se connecter
               </Link>
               <Link
                 href="/inscription"
-                className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
+                onClick={() => setMenuOpen(false)}
+                className="bg-blue-600 text-white px-3 py-2 rounded-lg text-center hover:bg-blue-700"
               >
                 Créer un compte
               </Link>
