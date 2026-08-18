@@ -15,6 +15,7 @@ export default function PublicProfilePage() {
   const [notFound, setNotFound] = useState(false)
   const [profile, setProfile] = useState(null)
   const [detail, setDetail] = useState({})
+  const [campaigns, setCampaigns] = useState([])
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [reporting, setReporting] = useState(false)
   const [reportReason, setReportReason] = useState('')
@@ -57,6 +58,15 @@ export default function PublicProfilePage() {
         .single()
 
       setDetail(detailData || {})
+
+      const { data: campaignsData } = await supabase
+        .from('campaigns')
+        .select('id, title, budget, category')
+        .eq('creator_id', id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+
+      setCampaigns(campaignsData || [])
       setLoading(false)
     }
 
@@ -245,6 +255,35 @@ export default function PublicProfilePage() {
           </>
         )}
       </div>
+
+      {campaigns.length > 0 && (
+        <div className="mb-6">
+          <p className="text-sm font-semibold text-gray-700 mb-2">
+            Campagne{campaigns.length > 1 ? 's' : ''} en cours
+          </p>
+          <div className="space-y-2">
+            {campaigns.map((c) => (
+              <Link
+                key={c.id}
+                href="/campagnes"
+                className="block border rounded-lg p-3 hover:bg-gray-50"
+              >
+                <div className="flex items-start justify-between">
+                  <p className="font-medium text-gray-900 text-sm">{c.title}</p>
+                  {c.category && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                      {c.category}
+                    </span>
+                  )}
+                </div>
+                {c.budget && (
+                  <p className="text-xs text-gray-500 mt-1">Budget indicatif : {c.budget}</p>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Link
         href={`/messages/${id}`}
