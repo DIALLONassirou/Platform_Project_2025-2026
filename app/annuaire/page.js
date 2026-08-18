@@ -149,6 +149,12 @@ function AnnuaireContent() {
             >
               Entreprises
             </a>
+            <Link
+              href="/campagnes"
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-white text-gray-700 border"
+            >
+              Campagnes
+            </Link>
           </div>
         </div>
 

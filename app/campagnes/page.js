@@ -94,6 +94,27 @@ export default function CampagnesPage() {
           </Link>
         </div>
 
+        <div className="flex gap-2 mb-6">
+          <Link
+            href="/annuaire?type=influencer"
+            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-white text-gray-700 border"
+          >
+            Influenceurs
+          </Link>
+          <Link
+            href="/annuaire?type=business"
+            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-white text-gray-700 border"
+          >
+            Entreprises
+          </Link>
+          <Link
+            href="/campagnes"
+            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-600 text-white"
+          >
+            Campagnes
+          </Link>
+        </div>
+
         <div className="mb-8">
           <select
             value={categoryFilter}
