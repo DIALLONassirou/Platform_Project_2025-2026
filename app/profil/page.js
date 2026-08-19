@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { SOCIAL_PLATFORMS } from '@/lib/socialPlatforms'
+import { AGE_RANGES } from '@/lib/ageRanges'
 
 export default function ProfilPage() {
   const supabase = createClient()
@@ -68,7 +69,7 @@ export default function ProfilPage() {
 
       const { data: campaignsData } = await supabase
         .from('campaigns')
-        .select('id, title, description, budget, category, image_url, is_active')
+        .select('id, title, description, budget, category, image_url, is_active, target_city, target_age_ranges')
         .eq('creator_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -296,6 +297,12 @@ export default function ProfilPage() {
                 </div>
               )}
 
+              {detail.audience_age_ranges?.length > 0 && (
+                <p className="text-xs text-gray-500">
+                  Âge de mon audience : {detail.audience_age_ranges.join(', ')}
+                </p>
+              )}
+
               {SOCIAL_PLATFORMS.some(({ key }) => detail[`${key}_url`]) && (
                 <div className="flex flex-wrap gap-2">
                   {SOCIAL_PLATFORMS.map(({ key, label, Icon, color }) => {
@@ -385,6 +392,14 @@ export default function ProfilPage() {
                     )}
                     {c.budget && (
                       <p className="text-xs text-gray-500 mt-1">Budget indicatif : {c.budget}</p>
+                    )}
+                    {(c.target_city || c.target_age_ranges?.length > 0) && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Ciblage :{' '}
+                        {[c.target_city, c.target_age_ranges?.join(', ')]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
                     )}
                   </div>
                 ))}
@@ -481,6 +496,37 @@ export default function ProfilPage() {
                       }`}
                     >
                       {cat}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600 mb-2">
+                Tranche(s) d&apos;âge de mon audience (choisis-en une ou plusieurs)
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {AGE_RANGES.map((range) => {
+                  const selected = (detail.audience_age_ranges || []).includes(range)
+                  return (
+                    <button
+                      type="button"
+                      key={range}
+                      onClick={() => {
+                        const current = detail.audience_age_ranges || []
+                        const updated = selected
+                          ? current.filter((r) => r !== range)
+                          : [...current, range]
+                        setDetail({ ...detail, audience_age_ranges: updated })
+                      }}
+                      className={`px-3 py-1 rounded-full text-sm border ${
+                        selected
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-gray-700 border-gray-300'
+                      }`}
+                    >
+                      {range}
                     </button>
                   )
                 })}

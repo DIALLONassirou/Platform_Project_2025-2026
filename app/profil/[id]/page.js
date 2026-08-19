@@ -61,7 +61,7 @@ export default function PublicProfilePage() {
 
       const { data: campaignsData } = await supabase
         .from('campaigns')
-        .select('id, title, description, budget, category, image_url')
+        .select('id, title, description, budget, category, image_url, target_city, target_age_ranges')
         .eq('creator_id', id)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
@@ -288,6 +288,12 @@ export default function PublicProfilePage() {
                 )}
                 {c.budget && (
                   <p className="text-xs text-gray-500 mt-1">Budget indicatif : {c.budget}</p>
+                )}
+                {(c.target_city || c.target_age_ranges?.length > 0) && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Ciblage :{' '}
+                    {[c.target_city, c.target_age_ranges?.join(', ')].filter(Boolean).join(' · ')}
+                  </p>
                 )}
               </Link>
             ))}

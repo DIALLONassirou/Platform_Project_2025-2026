@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { AGE_RANGES } from '@/lib/ageRanges'
 
 const CATEGORIES = ['mode', 'beauté', 'food', 'lifestyle', 'tech', 'événementiel']
 
@@ -15,6 +16,8 @@ export default function NouvelleCampagnePage() {
   const [description, setDescription] = useState('')
   const [budget, setBudget] = useState('')
   const [category, setCategory] = useState('')
+  const [targetCity, setTargetCity] = useState('')
+  const [targetAgeRanges, setTargetAgeRanges] = useState([])
   const [imageUrl, setImageUrl] = useState('')
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -81,6 +84,8 @@ export default function NouvelleCampagnePage() {
       description: description.trim(),
       budget: budget.trim() || null,
       category: category || null,
+      target_city: targetCity.trim() || null,
+      target_age_ranges: targetAgeRanges.length > 0 ? targetAgeRanges : null,
       image_url: imageUrl || null,
     })
 
@@ -168,6 +173,45 @@ export default function NouvelleCampagnePage() {
                 {cat}
               </button>
             ))}
+          </div>
+        </div>
+
+        <input
+          type="text"
+          placeholder="Ville ciblée (laisser vide = toutes les villes)"
+          value={targetCity}
+          onChange={(e) => setTargetCity(e.target.value)}
+          className="w-full border rounded-lg p-3"
+        />
+
+        <div>
+          <p className="text-sm text-gray-600 mb-2">
+            Tranche(s) d&apos;âge du public visé (laisser vide = tout le monde)
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {AGE_RANGES.map((range) => {
+              const selected = targetAgeRanges.includes(range)
+              return (
+                <button
+                  type="button"
+                  key={range}
+                  onClick={() =>
+                    setTargetAgeRanges(
+                      selected
+                        ? targetAgeRanges.filter((r) => r !== range)
+                        : [...targetAgeRanges, range]
+                    )
+                  }
+                  className={`px-3 py-1 rounded-full text-sm border ${
+                    selected
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-300'
+                  }`}
+                >
+                  {range}
+                </button>
+              )
+            })}
           </div>
         </div>
 

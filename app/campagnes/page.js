@@ -13,6 +13,8 @@ export default function CampagnesPage() {
   const router = useRouter()
 
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [viewerCity, setViewerCity] = useState(null)
+  const [viewerAgeRanges, setViewerAgeRanges] = useState([])
   const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading] = useState(true)
   const [categoryFilter, setCategoryFilter] = useState('')
@@ -29,11 +31,32 @@ export default function CampagnesPage() {
 
       setCurrentUserId(user?.id || null)
 
+      if (user) {
+        const { data: viewerProfile } = await supabase
+          .from('profiles')
+          .select('city, account_type')
+          .eq('id', user.id)
+          .single()
+
+        setViewerCity(viewerProfile?.city || null)
+
+        if (viewerProfile?.account_type === 'influencer') {
+          const { data: viewerDetail } = await supabase
+            .from('influencer_profiles')
+            .select('audience_age_ranges')
+            .eq('id', user.id)
+            .single()
+
+          setViewerAgeRanges(viewerDetail?.audience_age_ranges || [])
+        }
+      }
+
       const { data, error } = await supabase
         .from('campaigns')
         .select(
           `
           id, title, description, budget, category, image_url, creator_id, created_at,
+          target_city, target_age_ranges,
           creator:creator_id ( full_name, account_type, city, is_certified )
         `
         )
@@ -94,7 +117,24 @@ export default function CampagnesPage() {
     setReactionsByCampaign((prev) => ({ ...prev, [campaignId]: data || [] }))
   }
 
-  const filtered = campaigns.filter((c) => !categoryFilter || c.category === categoryFilter)
+  function isMatch(campaign) {
+    const hasTargeting = campaign.target_city || campaign.target_age_ranges?.length > 0
+    if (!hasTargeting) return false
+
+    const cityMatches =
+      !campaign.target_city ||
+      (viewerCity && campaign.target_city.trim().toLowerCase() === viewerCity.trim().toLowerCase())
+
+    const ageMatches =
+      !campaign.target_age_ranges?.length ||
+      campaign.target_age_ranges.some((r) => viewerAgeRanges.includes(r))
+
+    return cityMatches && ageMatches
+  }
+
+  const filtered = campaigns
+    .filter((c) => !categoryFilter || c.category === categoryFilter)
+    .sort((a, b) => Number(isMatch(b)) - Number(isMatch(a)))
 
   async function loadInterests(campaignId) {
     const { data } = await supabase
@@ -189,9 +229,21 @@ export default function CampagnesPage() {
           {filtered.map((c) => {
             const isMine = c.creator_id === currentUserId
             const interests = interestsByCampaign[c.id] || []
+            const matched = isMatch(c)
 
             return (
-              <div key={c.id} className="bg-white border rounded-xl p-4 shadow-sm">
+              <div
+                key={c.id}
+                className={`bg-white border rounded-xl p-4 shadow-sm ${
+                  matched ? 'ring-2 ring-blue-400' : ''
+                }`}
+              >
+                {matched && (
+                  <span className="inline-block text-xs bg-blue-600 text-white px-2 py-1 rounded-full mb-2">
+                    ✨ Correspond à ton profil
+                  </span>
+                )}
+
                 {c.image_url && (
                   <img
                     src={c.image_url}
@@ -213,6 +265,13 @@ export default function CampagnesPage() {
 
                 {c.budget && (
                   <p className="text-xs text-gray-500 mb-2">Budget indicatif : {c.budget}</p>
+                )}
+
+                {(c.target_city || c.target_age_ranges?.length > 0) && (
+                  <p className="text-xs text-gray-500 mb-2">
+                    Ciblage :{' '}
+                    {[c.target_city, c.target_age_ranges?.join(', ')].filter(Boolean).join(' · ')}
+                  </p>
                 )}
 
                 <p className="text-xs text-gray-500 mb-3">
